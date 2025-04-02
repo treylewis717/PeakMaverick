@@ -4,6 +4,7 @@
 #include "lemlib/chassis/trackingWheel.hpp"
 #include "liblvgl/llemu.hpp"
 #include "pros/abstract_motor.hpp"
+#include "pros/motors.h"
 #include "pros/rotation.hpp"
 #include "pros/rtos.hpp"
 
@@ -32,22 +33,22 @@ lemlib::OdomSensors sensors(
 
 // lateral PID controller
 lemlib::ControllerSettings
-    lateral_controller(10.5, // proportional gain (kP)
-                       0.05, // integral gain (kI)
-                       120,  // derivative gain (kD)
+    lateral_controller(10, // proportional gain (kP)
+                       0, // integral gain (kI)
+                       3,  // derivative gain (kD)
                        3,    // anti windup
-                       1,    // small error range, in inches
+                       0.1,    // small error range, in inches
                        100,  // small error range timeout, in milliseconds
                        3,    // large error range, in inches
                        500,  // large error range timeout, in milliseconds
-                       20    // maximum acceleration (slew)
+                       10    // maximum acceleration (slew)
     );
 
 // angular PID controller
 lemlib::ControllerSettings
     angular_controller(10,  // proportional gain (kP)
                        0,   // integral gain (kI)
-                       75,  // derivative gain (kD)
+                       80,  // derivative gain (kD)
                        3,   // anti windup
                        .5,  // small error range, in degrees
                        100, // small error range timeout, in milliseconds
@@ -83,6 +84,8 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
+  left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
+  right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
   pros::Motor liftM(LIFT_PORT);
   pros::Motor intakeM(INTAKE_PORT);
   pros::Motor ladyBrown(LB_PORT);
@@ -93,22 +96,35 @@ void autonomous() {
   ladyBrown.set_brake_mode_all(pros::MotorBrake::hold);
   pros::adi::DigitalOut clamp(CLAMP_PORT);
 
-  chassis.setPose(0, 0, 0);
+  chassis.setPose(0, -12, 0);
 
-  liftM.move(127);
+  liftM.move(127); // ALIANCE STAKE
   pros::delay(300);
 
-  chassis.moveToPoint(0, 10, 1000);
+  chassis.moveToPoint(0, 0, 1000);
 
-  chassis.turnToHeading(90, 1000);
+  chassis.turnToHeading(90, 1000, {}, false);
 
-  chassis.moveToPoint(-24, chassis.getPose().y, 1000, {.forwards = false}, false);
+  chassis.moveToPoint(-26, chassis.getPose().y, 700, {.forwards = false, .maxSpeed=63},
+                      false); // MOGO 1
 
   clamp.set_value(1);
 
-  chassis.turnToHeading(0, 1000);
+  chassis.turnToHeading(0, 1000, {}, false);
 
   intakeM.move(127);
+
+  chassis.moveToPoint(chassis.getPose().x, 24, 1000); // RING 1
+
+  chassis.turnToHeading(-45, 1000, {}, false);
+
+  chassis.moveToPose(chassis.getPose().x - 20, chassis.getPose().y + 48, 0, 5000, {}, false); // RING 2
+
+  chassis.moveToPoint(chassis.getPose().x + 3, chassis.getPose().y - 25, 5000, {.forwards=false});
+
+  chassis.turnToPoint(-72, 47, 3000); // WALL STAKE 1
+
+  chassis.moveToPoint(-72, 47, 1000);
 }
 
 void opcontrol() {}
