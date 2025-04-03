@@ -33,15 +33,15 @@ lemlib::OdomSensors sensors(
 
 // lateral PID controller
 lemlib::ControllerSettings
-    lateral_controller(10, // proportional gain (kP)
-                       0, // integral gain (kI)
-                       3,  // derivative gain (kD)
-                       3,    // anti windup
-                       0.1,    // small error range, in inches
-                       100,  // small error range timeout, in milliseconds
-                       3,    // large error range, in inches
-                       500,  // large error range timeout, in milliseconds
-                       10    // maximum acceleration (slew)
+    lateral_controller(10,  // proportional gain (kP)
+                       0,   // integral gain (kI)
+                       3,   // derivative gain (kD)
+                       3,   // anti windup
+                       0.1, // small error range, in inches
+                       100, // small error range timeout, in milliseconds
+                       3,   // large error range, in inches
+                       500, // large error range timeout, in milliseconds
+                       10   // maximum acceleration (slew)
     );
 
 // angular PID controller
@@ -105,7 +105,8 @@ void autonomous() {
 
   chassis.turnToHeading(90, 1000, {}, false);
 
-  chassis.moveToPoint(-26, chassis.getPose().y, 700, {.forwards = false, .maxSpeed=63},
+  chassis.moveToPoint(-26, chassis.getPose().y, 700,
+                      {.forwards = false, .maxSpeed = 63},
                       false); // MOGO 1
 
   clamp.set_value(1);
@@ -118,13 +119,39 @@ void autonomous() {
 
   chassis.turnToHeading(-45, 1000, {}, false);
 
-  chassis.moveToPose(chassis.getPose().x - 20, chassis.getPose().y + 48, 0, 5000, {}, false); // RING 2
+  chassis.moveToPose(chassis.getPose().x - 20, chassis.getPose().y + 48, 0,
+                     5000, {}, false); // RING 2
 
-  chassis.moveToPoint(chassis.getPose().x + 3, chassis.getPose().y - 25, 5000, {.forwards=false});
+  chassis.moveToPoint(chassis.getPose().x + 3, chassis.getPose().y - 25, 5000,
+                      {.forwards = false});
 
-  chassis.turnToPoint(-72, 47, 3000); // WALL STAKE 1
+  chassis.turnToPoint(-72, 47, 3000, {}, false); // WALL STAKE 1
 
-  chassis.moveToPoint(-72, 47, 1000);
+  ladyBrown.move_absolute(65, 127);
+
+  chassis.moveToPoint(-72, 47, 1000); // HITS WALL STAKE
+
+  int start = pros::millis();
+  int timeSince = 0;
+
+  while (true) {
+    if (ringCheck.get_distance() < 50 || timeSince > 3000) {
+      break;
+    }
+    timeSince = pros::millis() - start;
+  }
+
+  ladyBrown.move_absolute(720, 127);
+
+  while (ladyBrown.get_position() < 600) {
+    pros::delay(10);
+  }
+
+  ladyBrown.move_absolute(0, 127);
+
+  pros::delay(1000);
+
+  chassis.moveToPoint(-36, 47, 1000, {.forwards = false});
 }
 
 void opcontrol() {}
